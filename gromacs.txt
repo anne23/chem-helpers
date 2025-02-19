@@ -22,8 +22,9 @@ cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON -DCMAKE_C_COMPILER
 make
 make check
 sudo make install
-source /usr/local/gromacs/bin/GMXRC
 
+
+/usr/local/bin/gmx
 
 
 
