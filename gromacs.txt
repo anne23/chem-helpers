@@ -1,0 +1,29 @@
+https://manual.gromacs.org/current/install-guide/index.html
+
+https://gromacs.bioexcel.eu/t/error-compiling-gromacs-2023s-checks-on-mac-m2/5924
+
+
+brew install cmake
+brew install wget
+brew install gcc
+brew install libomp
+brew install opencl-headers
+
+
+
+
+
+tar xfz gromacs-2025.0.tar.gz
+cd gromacs-2025.0
+mkdir build
+cd build
+cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON -DCMAKE_C_COMPILER=/opt/homebrew/bin/gcc-14 \
+-DCMAKE_CXX_COMPILER=/opt/homebrew/bin/g++-14
+make
+make check
+sudo make install
+source /usr/local/gromacs/bin/GMXRC
+
+
+
+
