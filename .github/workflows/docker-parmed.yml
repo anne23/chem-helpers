@@ -1,0 +1,51 @@
+name: docker parmed image 
+run-name: ${{ github.actor }} docker parmed
+on:
+  push:
+    branches:
+      - main # TODO is it really not possible to avoid hardcoding this?
+    paths:
+      - '.github/workflows/docker-parmed.yml'
+      - 'docker/parmed/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docker-parmed.yml'
+      - 'docker/parmed/**'
+jobs:
+  docker-parmed:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      THIS_BRANCH: ${{ github.ref_name }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: docker/parmed
+    steps:
+      - uses: actions/checkout@v4
+      - name: set tags
+        id: tag
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          TIMESTAMP=$(date '+%Y-%m-%d')
+          echo $DEFAULT_BRANCH
+          echo $THIS_BRANCH
+          if [[ "$THIS_BRANCH" == "$DEFAULT_BRANCH" ]]; then
+            echo "IMAGE_TAGS=anne23/parmed:$TIMESTAMP,anne23/parmed:latest" >> $GITHUB_OUTPUT
+          else
+            echo "IMAGE_TAGS=anne23/parmed:0.${PR_NUMBER}.${TIMESTAMP}" >> $GITHUB_OUTPUT
+          fi
+          cat $GITHUB_OUTPUT
+      - name: log in to dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: build and push parmed image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/parmed
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.tag.outputs.IMAGE_TAGS }}
