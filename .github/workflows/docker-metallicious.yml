@@ -1,0 +1,51 @@
+name: docker metallicious image 
+run-name: ${{ github.actor }} docker metallicious
+on:
+  push:
+    branches:
+      - main # TODO is it really not possible to avoid hardcoding this?
+    paths:
+      - '.github/workflows/docker-metallicious.yml'
+      - 'docker/metallicious/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docker-metallicious.yml'
+      - 'docker/metallicious/**'
+jobs:
+  docker-metallicious:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      THIS_BRANCH: ${{ github.ref_name }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: docker/metallicious
+    steps:
+      - uses: actions/checkout@v4
+      - name: set tags
+        id: tag
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          TIMESTAMP=$(date '+%Y-%m-%d')
+          echo $DEFAULT_BRANCH
+          echo $THIS_BRANCH
+          if [[ "$THIS_BRANCH" == "$DEFAULT_BRANCH" ]]; then
+            echo "IMAGE_TAGS=anne23/metallicious:$TIMESTAMP,anne23/metallicious:latest" >> $GITHUB_OUTPUT
+          else
+            echo "IMAGE_TAGS=anne23/metallicious:0.${PR_NUMBER}.${TIMESTAMP}" >> $GITHUB_OUTPUT
+          fi
+          cat $GITHUB_OUTPUT
+      - name: log in to dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: build and push metallicious image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/metallicious
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.tag.outputs.IMAGE_TAGS }}
